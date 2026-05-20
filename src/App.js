@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Layout } from 'antd';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -13,16 +13,19 @@ import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import 'antd/dist/reset.css';
 
-const { Content } = Layout;
-
 function App() {
   return (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
-            <Layout style={{ minHeight: '100vh' }}>
+            <div style={{
+              minHeight: '100vh',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#fff8f5'
+            }}>
               <Navbar />
-              <Content>
+              <div style={{ flex: 1 }}>
                 <Routes>
                   {/* Public routes */}
                   <Route path="/login" element={<Login />} />
@@ -58,8 +61,9 @@ function App() {
                     <Navigate to="/products" replace />
                   } />
                 </Routes>
-              </Content>
-            </Layout>
+              </div>
+              <Footer />
+            </div>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>
