@@ -27,6 +27,9 @@ const Products = () => {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+    const [sortBy, setSortBy] = useState('default');
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
     const { addToCart, totalItems } = useCart();
     const navigate = useNavigate();
 
@@ -47,30 +50,53 @@ const Products = () => {
         }
     };
 
-    const categories = ['All', ...new Set(products.map(p => p.category))];
+    const applyAllFilters = (searchVal, cat, sort, min, max) => {
+        let result = [...products];
+        if(cat !== 'All') result = result.filter(p => p.category === cat);
+        if(searchVal) result = result.filter(p =>
+            p.name.toLowerCase().includes(searchVal.toLowerCase()) ||
+            p.category.toLowerCase().includes(searchVal.toLowerCase())
+        );
+        if(min) result = result.filter(p => p.price >= Number(min));
+        if(max) result = result.filter(p => p.price <= Number(max));
+        switch(sort) {
+            case 'price_low': result.sort((a, b) => a.price - b.price); break;
+            case 'price_high': result.sort((a, b) => b.price - a.price); break;
+            case 'name_az': result.sort((a, b) => a.name.localeCompare(b.name)); break;
+            case 'name_za': result.sort((a, b) => b.name.localeCompare(a.name)); break;
+            default: break;
+        }
+        setFiltered(result);
+    };
 
     const handleSearch = (value) => {
         setSearch(value);
-        filterProducts(value, activeCategory);
+        applyAllFilters(value, activeCategory, sortBy, minPrice, maxPrice);
     };
 
     const handleCategory = (cat) => {
         setActiveCategory(cat);
-        filterProducts(search, cat);
+        applyAllFilters(search, cat, sortBy, minPrice, maxPrice);
     };
 
-    const filterProducts = (searchVal, cat) => {
-        let result = products;
-        if(cat !== 'All') {
-            result = result.filter(p => p.category === cat);
-        }
-        if(searchVal) {
-            result = result.filter(p =>
-                p.name.toLowerCase().includes(searchVal.toLowerCase()) ||
-                p.category.toLowerCase().includes(searchVal.toLowerCase())
-            );
-        }
-        setFiltered(result);
+    const handleSort = (value) => {
+        setSortBy(value);
+        applyAllFilters(search, activeCategory, value, minPrice, maxPrice);
+    };
+
+    const handlePriceFilter = (min, max) => {
+        setMinPrice(min);
+        setMaxPrice(max);
+        applyAllFilters(search, activeCategory, sortBy, min, max);
+    };
+
+    const clearAllFilters = () => {
+        setSortBy('default');
+        setMinPrice('');
+        setMaxPrice('');
+        setSearch('');
+        setActiveCategory('All');
+        setFiltered(products);
     };
 
     const handleAddToCart = (product) => {
@@ -124,8 +150,6 @@ const Products = () => {
                     }}>
                         {products.length} curated products just for you
                     </p>
-
-                    {/* Search bar */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -153,8 +177,6 @@ const Products = () => {
                         />
                     </div>
                 </div>
-
-                {/* Cart button */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                     <div style={{ fontSize: 80 }}>🛍️</div>
                     <Badge count={totalItems} color="#e8603c">
@@ -181,8 +203,7 @@ const Products = () => {
                 </div>
             </div>
 
-            {/* Category filters */}
-            {/* Category filters — Dropdown */}
+            {/* Category Filter */}
             <div style={{
                 padding: '16px 32px',
                 display: 'flex',
@@ -191,10 +212,9 @@ const Products = () => {
                 background: 'white',
                 borderBottom: '2px solid #ffe4d6'
             }}>
-    <span style={{ fontSize: 13, fontWeight: 800, color: '#3d1f18' }}>
-        Filter by Category:
-    </span>
-
+                <span style={{ fontSize: 13, fontWeight: 800, color: '#3d1f18' }}>
+                    Category:
+                </span>
                 <select
                     value={activeCategory}
                     onChange={e => handleCategory(e.target.value)}
@@ -228,58 +248,113 @@ const Products = () => {
                         );
                     })}
                 </select>
+                <span style={{ fontSize: 12, color: '#a06050', fontWeight: 600, marginLeft: 'auto' }}>
+                    Showing {filtered.length} of {products.length} products
+                </span>
+            </div>
 
-                {/* Active filter badge */}
-                {activeCategory !== 'All' && (
-                    <div style={{
-                        background: '#fff0eb',
-                        border: '1.5px solid #ffe4d6',
-                        borderRadius: 25,
-                        padding: '8px 14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8
-                    }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#3d1f18' }}>
-                {categoryEmojis[activeCategory]} {activeCategory}
-            </span>
-                        <span style={{
-                            background: '#e8603c',
-                            color: 'white',
-                            fontSize: 10,
-                            fontWeight: 900,
-                            padding: '2px 7px',
-                            borderRadius: 20
-                        }}>
-                {filtered.length}
-            </span>
-                        <button
-                            onClick={() => handleCategory('All')}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#e8603c',
-                                cursor: 'pointer',
-                                fontSize: 14,
-                                fontWeight: 900,
-                                padding: 0,
-                                lineHeight: 1
-                            }}
-                        >
-                            ✕
-                        </button>
-                    </div>
+            {/* Sort + Price Filter */}
+            <div style={{
+                padding: '16px 32px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                background: '#fff8f5',
+                borderBottom: '2px solid #ffe4d6',
+                flexWrap: 'wrap'
+            }}>
+                {/* Sort */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#3d1f18' }}>Sort:</span>
+                    <select
+                        value={sortBy}
+                        onChange={e => handleSort(e.target.value)}
+                        style={{
+                            background: '#fff0eb',
+                            border: '2px solid #ffe4d6',
+                            borderRadius: 25,
+                            padding: '8px 16px',
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: '#e8603c',
+                            cursor: 'pointer',
+                            outline: 'none',
+                            fontFamily: "'Helvetica Neue', sans-serif"
+                        }}
+                    >
+                        <option value="default">✨ Default</option>
+                        <option value="price_low">💰 Price: Low to High</option>
+                        <option value="price_high">💎 Price: High to Low</option>
+                        <option value="name_az">🔤 Name: A to Z</option>
+                        <option value="name_za">🔤 Name: Z to A</option>
+                    </select>
+                </div>
+
+                {/* Price Range */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#3d1f18' }}>Price:</span>
+                    <input
+                        type="number"
+                        placeholder="Min ₹"
+                        value={minPrice}
+                        onChange={e => handlePriceFilter(e.target.value, maxPrice)}
+                        style={{
+                            width: 90,
+                            padding: '8px 12px',
+                            border: '2px solid #ffe4d6',
+                            borderRadius: 25,
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: '#3d1f18',
+                            background: '#fff0eb',
+                            outline: 'none',
+                            fontFamily: "'Helvetica Neue', sans-serif"
+                        }}
+                        onFocus={e => e.target.style.borderColor = '#e8603c'}
+                        onBlur={e => e.target.style.borderColor = '#ffe4d6'}
+                    />
+                    <span style={{ color: '#a06050', fontWeight: 700 }}>—</span>
+                    <input
+                        type="number"
+                        placeholder="Max ₹"
+                        value={maxPrice}
+                        onChange={e => handlePriceFilter(minPrice, e.target.value)}
+                        style={{
+                            width: 90,
+                            padding: '8px 12px',
+                            border: '2px solid #ffe4d6',
+                            borderRadius: 25,
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: '#3d1f18',
+                            background: '#fff0eb',
+                            outline: 'none',
+                            fontFamily: "'Helvetica Neue', sans-serif"
+                        }}
+                        onFocus={e => e.target.style.borderColor = '#e8603c'}
+                        onBlur={e => e.target.style.borderColor = '#ffe4d6'}
+                    />
+                </div>
+
+                {/* Clear filters */}
+                {(sortBy !== 'default' || minPrice || maxPrice || activeCategory !== 'All' || search) && (
+                    <button
+                        onClick={clearAllFilters}
+                        style={{
+                            background: '#fff0eb',
+                            border: '1.5px solid #ffe4d6',
+                            color: '#e8603c',
+                            padding: '8px 16px',
+                            borderRadius: 25,
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 800,
+                            marginLeft: 'auto'
+                        }}
+                    >
+                        ✕ Clear All Filters
+                    </button>
                 )}
-
-                {/* Results count */}
-                <span style={{
-                    fontSize: 12,
-                    color: '#a06050',
-                    fontWeight: 600,
-                    marginLeft: 'auto'
-                }}>
-        Showing {filtered.length} of {products.length} products
-    </span>
             </div>
 
             {/* Products grid */}
@@ -287,16 +362,13 @@ const Products = () => {
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: 80 }}>
                         <div style={{ fontSize: 48, marginBottom: 16 }}>🛍️</div>
-                        <p style={{ color: '#a06050', fontWeight: 700 }}>
-                            Loading products...
-                        </p>
+                        <p style={{ color: '#a06050', fontWeight: 700 }}>Loading products...</p>
                     </div>
                 ) : (
                     <>
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns:
-                                'repeat(auto-fill, minmax(240px, 1fr))',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
                             gap: 20
                         }}>
                             {filtered.map(product => (
@@ -319,7 +391,6 @@ const Products = () => {
                                         e.currentTarget.style.boxShadow = 'none';
                                     }}
                                 >
-                                    {/* Product image area */}
                                     <div style={{
                                         background: 'linear-gradient(135deg, #ffe4d6, #ffd6e7)',
                                         height: 180,
@@ -330,7 +401,6 @@ const Products = () => {
                                         position: 'relative'
                                     }}>
                                         {categoryEmojis[product.category] || '📦'}
-                                        {/* Category badge */}
                                         <div style={{
                                             position: 'absolute',
                                             top: 12,
@@ -346,8 +416,6 @@ const Products = () => {
                                             {product.category}
                                         </div>
                                     </div>
-
-                                    {/* Product info */}
                                     <div style={{ padding: '16px 18px' }}>
                                         <h3 style={{
                                             fontSize: 15,
@@ -366,7 +434,6 @@ const Products = () => {
                                         }}>
                                             {product.description}
                                         </p>
-
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
@@ -392,8 +459,7 @@ const Products = () => {
                                                     cursor: 'pointer',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: 4,
-                                                    transition: 'all 0.2s'
+                                                    gap: 4
                                                 }}
                                             >
                                                 <ShoppingCartOutlined /> Add
@@ -407,22 +473,14 @@ const Products = () => {
                         {filtered.length === 0 && (
                             <div style={{ textAlign: 'center', padding: 60 }}>
                                 <div style={{ fontSize: 64, marginBottom: 16 }}>🔍</div>
-                                <h3 style={{
-                                    color: '#3d1f18',
-                                    fontWeight: 800,
-                                    margin: '0 0 8px'
-                                }}>
+                                <h3 style={{ color: '#3d1f18', fontWeight: 800, margin: '0 0 8px' }}>
                                     No products found!
                                 </h3>
                                 <p style={{ color: '#a06050' }}>
                                     Try a different search or category
                                 </p>
                                 <button
-                                    onClick={() => {
-                                        setSearch('');
-                                        setActiveCategory('All');
-                                        setFiltered(products);
-                                    }}
+                                    onClick={clearAllFilters}
                                     style={{
                                         background: '#e8603c',
                                         color: 'white',
@@ -434,7 +492,7 @@ const Products = () => {
                                         marginTop: 12
                                     }}
                                 >
-                                    Clear filters
+                                    Clear All Filters
                                 </button>
                             </div>
                         )}

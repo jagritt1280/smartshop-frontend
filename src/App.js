@@ -12,6 +12,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import 'antd/dist/reset.css';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -32,6 +33,11 @@ function App() {
                   <Route path="/register" element={<Register />} />
 
                   {/* Protected routes */}
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/products" element={
                     <ProtectedRoute>
                       <Products />

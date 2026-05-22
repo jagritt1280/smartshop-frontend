@@ -24,7 +24,8 @@ const Navbar = () => {
 
     const navLinks = [
         { path: '/products', icon: <ShoppingOutlined />, label: 'Products' },
-        { path: '/orders', icon: <OrderedListOutlined />, label: 'My Orders' }
+        { path: '/orders', icon: <OrderedListOutlined />, label: 'My Orders' },
+        { path: '/profile', icon: <UserOutlined />, label: 'Profile' }
     ];
 
     return (
