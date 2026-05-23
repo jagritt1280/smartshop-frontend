@@ -1,70 +1,98 @@
-# Getting Started with Create React App
+# 🛒 SmartShop Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Modern React e-commerce frontend for SmartShop microservices platform with soft pastel UI design.
 
-## Available Scripts
+## 🚀 Tech Stack
 
-In the project directory, you can run:
+| Technology | Usage |
+|-----------|-------|
+| React 18 | Frontend framework |
+| Ant Design 5 | UI component library |
+| Axios | HTTP client |
+| React Router 6 | Client-side routing |
+| Context API | State management |
+| QRCode.react | UPI QR generation |
 
-### `npm start`
+## 🎨 Design System
+Primary:    #e8603c (coral)
+Secondary:  #f0a896 (soft pink)
+Background: #fff8f5 (warm white)
+Hero:       #ffe4d6 (peach)
+Cards:      #ffffff with #ffe4d6 border
+Text:       #3d1f18 (dark brown)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 📱 Pages
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+| Page | Route | Description |
+|------|-------|-------------|
+| Login | /login | User authentication |
+| Register | /register | New account |
+| Products | /products | Browse + filter + sort |
+| Cart | /cart | Shopping cart |
+| Checkout | /checkout | Shipping details |
+| Payment | /payment | UPI QR payment |
+| Orders | /orders | Order history |
+| Profile | /profile | User profile + stats |
 
-### `npm test`
+## ✨ Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- ✅ JWT authentication
+- ✅ Product search + category filter
+- ✅ Sort by price/name
+- ✅ Price range filter
+- ✅ Shopping cart with quantity controls
+- ✅ UPI payment with QR code
+- ✅ Order tracking with status badges
+- ✅ User profile with order stats
+- ✅ Responsive soft pastel design
+- ✅ Protected routes
+- ✅ Loading states
 
-### `npm run build`
+## 🛠️ Setup
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
+- Node.js 18+
+- SmartShop backend running
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Run locally:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+# Clone
+git clone https://github.com/jagritt1280/smartshop-frontend.git
+cd smartshop-frontend
 
-### `npm run eject`
+# Install
+npm install
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Start
+npm start
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+App runs at `http://localhost:3000`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🔗 API Configuration
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```javascript
+// src/services/api.js
+const BASE_URL = 'http://localhost:8080';
+```
 
-## Learn More
+Make sure SmartShop backend is running on port 8080!
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 💳 UPI Payment Flow
+Cart → Checkout → Place Order →
+Payment Gateway (QR Code) →
+Scan with GPay/PhonePe/Paytm →
+Payment Successful → Orders page
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+UPI ID: jagrittaneja217@okicici
 
-### Code Splitting
+## 🔗 Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+[SmartShop Microservices](https://github.com/jagritt1280/smartshop-microservices)
 
-### Analyzing the Bundle Size
+## 👨‍💻 Author
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Jagrit Taneja**
+- GitHub: [jagritt1280](https://github.com/jagritt1280)
+- LinkedIn: [jagrit-taneja](https://linkedin.com/in/jagrit-taneja)
