@@ -7,21 +7,21 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI, paymentAPI } from '../services/api';
-import { v4 as uuidv4 } from 'uuid';
+import { orderAPI } from '../services/api';
 
 const Checkout = () => {
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('UPI');
-    const [values, setValues] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: ''
-    });
     const { cartItems, totalAmount, clearCart } = useCart();
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    // ✅ Pre-filled with user data
+    const [values, setValues] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: '',
+        address: ''
+    });
 
     const handleChange = (e) => {
         setValues({ ...values, [e.target.name]: e.target.value });
@@ -49,19 +49,10 @@ const Checkout = () => {
 
             const orderResponse = await orderAPI.create(orderData);
             const orderId = orderResponse.data.id;
-
-            const paymentData = {
-                orderId: String(orderId),
-                userId: String(user?.id),
-                amount: totalAmount,
-                paymentMethod,
-                idempotencyKey: uuidv4()
-            };
-
-            await paymentAPI.process(paymentData);
             clearCart();
-            message.success('Order placed successfully! 🎉');
-            navigate('/orders');
+            navigate('/payment', {
+                state: { orderId, amount: totalAmount }
+            });
         } catch(error) {
             message.error(
                 error.response?.data?.message || 'Checkout failed!'
@@ -92,12 +83,6 @@ const Checkout = () => {
         color: '#3d1f18',
         marginBottom: 6
     };
-
-    const paymentOptions = [
-        { value: 'UPI', emoji: '📱', label: 'UPI', desc: 'GPay, PhonePe, Paytm' },
-        { value: 'CARD', emoji: '💳', label: 'Credit/Debit Card', desc: 'Visa, Mastercard, Rupay' },
-        { value: 'COD', emoji: '💵', label: 'Cash on Delivery', desc: 'Pay when delivered' }
-    ];
 
     return (
         <div style={{
@@ -137,7 +122,7 @@ const Checkout = () => {
                     gap: 8,
                     marginBottom: 16
                 }}>
-                    {['Cart', 'Checkout', 'Confirmation'].map((step, idx) => (
+                    {['Cart', 'Checkout', 'Payment'].map((step, idx) => (
                         <React.Fragment key={step}>
                             <div style={{
                                 background: idx === 1 ? '#e8603c' : idx < 1 ? '#f0a896' : '#ffe4d6',
@@ -182,7 +167,6 @@ const Checkout = () => {
             }}>
                 {/* Left — Form */}
                 <form onSubmit={handleCheckout}>
-                    {/* Shipping Details */}
                     <div style={{
                         background: 'white',
                         border: '1.5px solid #ffe4d6',
@@ -194,10 +178,7 @@ const Checkout = () => {
                             fontSize: 16,
                             fontWeight: 900,
                             color: '#3d1f18',
-                            margin: '0 0 20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8
+                            margin: '0 0 20px'
                         }}>
                             📦 Shipping Details
                         </h3>
@@ -213,8 +194,8 @@ const Checkout = () => {
                                 <input
                                     type="text"
                                     name="name"
-                                    placeholder={user?.name || 'Your name'}
-                                    defaultValue={user?.name}
+                                    placeholder="Your name"
+                                    value={values.name}
                                     onChange={handleChange}
                                     style={inputStyle}
                                     onFocus={e => e.target.style.borderColor = '#e8603c'}
@@ -227,6 +208,7 @@ const Checkout = () => {
                                     type="tel"
                                     name="phone"
                                     placeholder="+91 9876543210"
+                                    value={values.phone}
                                     onChange={handleChange}
                                     style={inputStyle}
                                     onFocus={e => e.target.style.borderColor = '#e8603c'}
@@ -240,8 +222,8 @@ const Checkout = () => {
                             <input
                                 type="email"
                                 name="email"
-                                placeholder={user?.email || 'your@email.com'}
-                                defaultValue={user?.email}
+                                placeholder="your@email.com"
+                                value={values.email}
                                 onChange={handleChange}
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = '#e8603c'}
@@ -254,22 +236,20 @@ const Checkout = () => {
                             <textarea
                                 name="address"
                                 placeholder="House no, Street, City, State, Pincode"
+                                value={values.address}
                                 onChange={handleChange}
                                 rows={3}
-                                style={{
-                                    ...inputStyle,
-                                    resize: 'vertical'
-                                }}
+                                style={{ ...inputStyle, resize: 'vertical' }}
                                 onFocus={e => e.target.style.borderColor = '#e8603c'}
                                 onBlur={e => e.target.style.borderColor = '#ffe4d6'}
                             />
                         </div>
                     </div>
 
-                    {/* Payment Method */}
+                    {/* UPI Only Payment */}
                     <div style={{
                         background: 'white',
-                        border: '1.5px solid #ffe4d6',
+                        border: '2px solid #e8603c',
                         borderRadius: 20,
                         padding: 24
                     }}>
@@ -277,71 +257,45 @@ const Checkout = () => {
                             fontSize: 16,
                             fontWeight: 900,
                             color: '#3d1f18',
-                            margin: '0 0 16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8
+                            margin: '0 0 12px'
                         }}>
                             💳 Payment Method
                         </h3>
-
                         <div style={{
+                            background: '#fff0eb',
+                            border: '2px solid #e8603c',
+                            borderRadius: 14,
+                            padding: '14px 18px',
                             display: 'flex',
-                            flexDirection: 'column',
-                            gap: 10
+                            alignItems: 'center',
+                            gap: 14
                         }}>
-                            {paymentOptions.map(opt => (
-                                <div
-                                    key={opt.value}
-                                    onClick={() => setPaymentMethod(opt.value)}
-                                    style={{
-                                        background: paymentMethod === opt.value
-                                            ? '#fff0eb'
-                                            : '#fff8f5',
-                                        border: paymentMethod === opt.value
-                                            ? '2px solid #e8603c'
-                                            : '1.5px solid #ffe4d6',
-                                        borderRadius: 14,
-                                        padding: '14px 18px',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 14,
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    {/* Radio circle */}
-                                    <div style={{
-                                        width: 20,
-                                        height: 20,
-                                        borderRadius: '50%',
-                                        border: paymentMethod === opt.value
-                                            ? '6px solid #e8603c'
-                                            : '2px solid #ffe4d6',
-                                        flexShrink: 0,
-                                        transition: 'all 0.2s'
-                                    }} />
-                                    <span style={{ fontSize: 24 }}>{opt.emoji}</span>
-                                    <div>
-                                        <p style={{
-                                            margin: 0,
-                                            fontSize: 14,
-                                            fontWeight: 800,
-                                            color: '#3d1f18'
-                                        }}>
-                                            {opt.label}
-                                        </p>
-                                        <p style={{
-                                            margin: 0,
-                                            fontSize: 11,
-                                            color: '#a06050',
-                                            fontWeight: 600
-                                        }}>
-                                            {opt.desc}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
+                            <div style={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                border: '6px solid #e8603c',
+                                flexShrink: 0
+                            }} />
+                            <span style={{ fontSize: 24 }}>📱</span>
+                            <div>
+                                <p style={{
+                                    margin: 0,
+                                    fontSize: 14,
+                                    fontWeight: 800,
+                                    color: '#3d1f18'
+                                }}>
+                                    UPI Payment
+                                </p>
+                                <p style={{
+                                    margin: 0,
+                                    fontSize: 11,
+                                    color: '#a06050',
+                                    fontWeight: 600
+                                }}>
+                                    GPay, PhonePe, Paytm — Scan QR on next page
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -412,18 +366,10 @@ const Checkout = () => {
                                 justifyContent: 'space-between',
                                 marginBottom: 8
                             }}>
-                                <span style={{
-                                    fontSize: 13,
-                                    color: '#a06050',
-                                    fontWeight: 600
-                                }}>
+                                <span style={{ fontSize: 13, color: '#a06050', fontWeight: 600 }}>
                                     Subtotal
                                 </span>
-                                <span style={{
-                                    fontSize: 13,
-                                    fontWeight: 700,
-                                    color: '#3d1f18'
-                                }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#3d1f18' }}>
                                     ₹{totalAmount?.toLocaleString()}
                                 </span>
                             </div>
@@ -432,18 +378,10 @@ const Checkout = () => {
                                 justifyContent: 'space-between',
                                 marginBottom: 12
                             }}>
-                                <span style={{
-                                    fontSize: 13,
-                                    color: '#a06050',
-                                    fontWeight: 600
-                                }}>
+                                <span style={{ fontSize: 13, color: '#a06050', fontWeight: 600 }}>
                                     Delivery
                                 </span>
-                                <span style={{
-                                    fontSize: 13,
-                                    fontWeight: 800,
-                                    color: '#10b981'
-                                }}>
+                                <span style={{ fontSize: 13, fontWeight: 800, color: '#10b981' }}>
                                     FREE 🎉
                                 </span>
                             </div>
@@ -458,18 +396,10 @@ const Checkout = () => {
                                 alignItems: 'center',
                                 marginBottom: 16
                             }}>
-                                <span style={{
-                                    fontSize: 16,
-                                    fontWeight: 900,
-                                    color: '#3d1f18'
-                                }}>
+                                <span style={{ fontSize: 16, fontWeight: 900, color: '#3d1f18' }}>
                                     Total
                                 </span>
-                                <span style={{
-                                    fontSize: 22,
-                                    fontWeight: 900,
-                                    color: '#e8603c'
-                                }}>
+                                <span style={{ fontSize: 22, fontWeight: 900, color: '#e8603c' }}>
                                     ₹{totalAmount?.toLocaleString()}
                                 </span>
                             </div>
@@ -499,11 +429,10 @@ const Checkout = () => {
                                 <CheckCircleOutlined />
                                 {loading
                                     ? 'Placing order...'
-                                    : `Place Order ₹${totalAmount?.toLocaleString()}`}
+                                    : `Proceed to Pay ₹${totalAmount?.toLocaleString()} →`}
                             </button>
                         </div>
 
-                        {/* Trust badges */}
                         <div style={{
                             marginTop: 16,
                             display: 'flex',
@@ -511,19 +440,11 @@ const Checkout = () => {
                             gap: 16,
                             flexWrap: 'wrap'
                         }}>
-                            <span style={{
-                                fontSize: 11,
-                                color: '#a06050',
-                                fontWeight: 600
-                            }}>
+                            <span style={{ fontSize: 11, color: '#a06050', fontWeight: 600 }}>
                                 🔒 Secure checkout
                             </span>
-                            <span style={{
-                                fontSize: 11,
-                                color: '#a06050',
-                                fontWeight: 600
-                            }}>
-                                🔄 Idempotent payments
+                            <span style={{ fontSize: 11, color: '#a06050', fontWeight: 600 }}>
+                                📱 UPI Payment
                             </span>
                         </div>
                     </div>

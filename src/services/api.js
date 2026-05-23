@@ -47,6 +47,7 @@ export const orderAPI = {
     create: (data) => api.post('/api/orders', data),
     getMyOrders: (userId) => api.get(`/api/orders/user/${userId}`),
     getById: (id) => api.get(`/api/orders/${id}`),
+    updateStatus: (id, status) => api.put(`/api/orders/${id}/status?status=${status}`)
 };
 // Payment APIs
 export const paymentAPI = {
